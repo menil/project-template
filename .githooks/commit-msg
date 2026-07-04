@@ -1,0 +1,41 @@
+#!/bin/sh
+
+MSG=$(cat "$1")
+TITLE=$(echo "$MSG" | head -n1)
+
+# Allow git rebase autosquash commits (fixup!, squash!, amend!)
+case "$TITLE" in
+fixup!* | squash!* | amend!*)
+  exit 0
+  ;;
+esac
+
+# Conventional commit regex
+# Format: type(scope): subject  or  type: subject
+CONV_REGEX='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._-]+\))?!?: .+'
+
+if ! echo "$TITLE" | grep -qE "$CONV_REGEX"; then
+  echo "ERROR: Commit title must follow conventional commits format:"
+  echo "  type(scope): subject"
+  echo "  Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+  exit 1
+fi
+
+# Title length
+TITLE_LEN=${#TITLE}
+if [ "$TITLE_LEN" -gt 72 ]; then
+  echo "ERROR: Commit title must be 72 characters or less ($TITLE_LEN)"
+  exit 1
+fi
+
+# Body line length
+BODY=$(echo "$MSG" | tail -n +3)
+if [ -n "$BODY" ]; then
+  echo "$BODY" | while IFS= read -r line; do
+    LEN=${#line}
+    if [ "$LEN" -gt 72 ]; then
+      echo "ERROR: Commit body lines must be 72 characters or less (line $LEN chars)"
+      exit 1
+    fi
+  done
+fi
