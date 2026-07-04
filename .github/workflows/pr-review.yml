@@ -1,0 +1,35 @@
+name: Automated Code Review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Check out the private composite action repository into a local path.
+      # This is necessary because it is private and cannot be loaded directly.
+      - name: Checkout Private Review Action
+        uses: actions/checkout@v4
+        with:
+          repository: menil/pr-code-review-action
+          token: ${{ secrets.PAT_WITH_REPO_ACCESS }} # Requires 'repo' or fine-grained contents scope
+          path: .github/actions/pr-code-review-action
+          ref: main # Pin to main branch for stability
+          persist-credentials: false # Prevent storing the PAT token in the runner's git config
+
+      - name: Run PR Review Action
+        uses: ./.github/actions/pr-code-review-action
+        with:
+          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          openrouter_model: ${{ vars.OPENROUTER_MODEL || 'openrouter/free' }}
+          openrouter_base_url: ${{ vars.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1/chat/completions' }}
+          openrouter_max_tokens: ${{ vars.OPENROUTER_MAX_TOKENS || '4096' }}
