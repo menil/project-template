@@ -4,6 +4,7 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     git
     gh
+    just
   ];
 
   shellHook = ''
