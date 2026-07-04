@@ -1,12 +1,14 @@
 # Project Template
 
-A generic, modern project template pre-configured with developer tooling, Nix integration, and automated AI code reviews.
+A generic, modern project template pre-configured with developer tooling, Nix integration, local git hook validation, and automated AI code reviews.
 
 ## Features
 
 - 🤖 **Automated PR Reviews**: Integrated via `menil/pr-code-review-action` using OpenRouter (free tier by default).
 - ❄️ **Nix Shell**: Pre-configured `shell.nix` for consistent, reproducible developer environments.
-- ⚙️ **Modern Git Integration**: Sensible `.gitignore` rules for macOS, VS Code, and Nix.
+- 🛠️ **Local Task Runner (`Justfile`)**: Standardized commands for formatting, linting, and validating code.
+- 🛡️ **Git Hooks**: Pre-configured conventional commit title checks and automatic pre-commit quality checks.
+- ⚡ **Direnv Ready**: Automatically configures local git hooks upon entering the directory.
 
 ---
 
@@ -30,7 +32,20 @@ For the automated PR code reviews to run successfully, navigate to your new repo
 
 ## Development Environment
 
-Activate the Nix developer shell:
+### Nix Shell
+Activate the Nix developer shell to load project tools:
 ```bash
 nix-shell
 ```
+
+### Task Runner (`Justfile`)
+The following tasks are available via `just`:
+- `just`: List all available tasks.
+- `just format`: Format code and configuration files.
+- `just lint`: Run code and markdown linters.
+- `just validate`: Execute all formatting, linting, and verification checks.
+
+### Git Hook Checks
+The project automatically configures local Git hooks:
+- **`commit-msg`**: Validates that all commit titles adhere to the [Conventional Commits](https://www.conventionalcommits.org/) standard (e.g. `feat: add database support`).
+- **`pre-commit`**: Automatically runs `just validate` before allowing a commit. If any check fails, the commit is aborted.
