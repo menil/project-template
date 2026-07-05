@@ -15,19 +15,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Check out the private composite action repository into a local path.
-      # This is necessary because it is private and cannot be loaded directly.
-      - name: Checkout Private Review Action
-        uses: actions/checkout@v4
-        with:
-          repository: menil/pr-code-review-action
-          token: ${{ secrets.PAT_WITH_REPO_ACCESS }} # Requires 'repo' or fine-grained contents scope
-          path: .github/actions/pr-code-review-action
-          ref: main # Pin to main branch for stability
-          persist-credentials: false # Prevent storing the PAT token in the runner's git config
-
       - name: Run PR Review Action
-        uses: ./.github/actions/pr-code-review-action
+        uses: menil/pr-code-review-action@main
         with:
           openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
           openrouter_model: ${{ vars.OPENROUTER_MODEL || 'openrouter/free' }}

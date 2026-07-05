@@ -23,10 +23,11 @@ gh repo create my-new-project --template menil/project-template --private --clon
 
 ### 2. Configure GitHub Secrets
 
-For the automated PR code reviews to run successfully, navigate to your new repository's **Settings > Secrets and variables > Actions** and add the following two secrets:
+For the automated PR code reviews to run successfully, navigate to your new repository's **Settings > Secrets and variables > Actions** and add:
 
-1. **`OPENROUTER_API_KEY`**: Your OpenRouter API Key.
-2. **`PAT_WITH_REPO_ACCESS`**: A GitHub Personal Access Token (PAT) with `repo` read access, which allows the runner to fetch the private review action repository.
+* **`OPENROUTER_API_KEY`**: Your OpenRouter API Key.
+
+*(Note: The template uses GitHub's Action Sharing to fetch `menil/pr-code-review-action` keylessly. Ensure you have configured the action repository under **Settings > Actions > General > Access** to be accessible from other repositories owned by your user account).*
 
 ---
 
