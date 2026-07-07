@@ -33,3 +33,6 @@ ENV/
 
 # Temp files
 pr.diff
+
+# Beads
+.beads/interactions.jsonl
