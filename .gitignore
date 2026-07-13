@@ -34,5 +34,5 @@ ENV/
 # Temp files
 pr.diff
 
-# Beads
-.beads/interactions.jsonl
+# Beads (issue tracking)
+.beads/
