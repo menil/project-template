@@ -9,6 +9,7 @@ A generic, modern project template pre-configured with developer tooling, Nix in
 - 🛠️ **Local Task Runner (`Justfile`)**: Standardized commands for formatting, linting, and validating code.
 - 🛡️ **Git Hooks**: Pre-configured conventional commit title checks and automatic pre-commit quality checks.
 - ⚡ **Direnv Ready**: Automatically configures local git hooks upon entering the directory.
+- ✅ **CI Validation**: A `validate` GitHub Actions workflow runs `just validate` on every push/PR, so checks aren't only enforced by the (bypassable) local pre-commit hook.
 
 ---
 
@@ -52,6 +53,8 @@ The following tasks are available via `just`:
 The project automatically configures local Git hooks:
 - **`commit-msg`**: Validates that all commit titles adhere to the [Conventional Commits](https://www.conventionalcommits.org/) standard (e.g. `feat: add database support`).
 - **`pre-commit`**: Automatically runs `just validate` before allowing a commit. If any check fails, the commit is aborted.
+
+These hooks only run locally and can be skipped (`git commit --no-verify`) or simply never installed (e.g. a contributor who hasn't run `direnv allow`, or a commit made through GitHub's web UI). The `validate` GitHub Actions workflow (`.github/workflows/validate.yml`) runs the same `just validate` in CI on every push and pull request as a backstop that can't be bypassed the same way.
 
 ### AI Agent Ignore Files
 `.agentignore` at the repo root is the canonical, gitignore-syntax list of paths AI coding agents shouldn't read (dependencies, build output, secrets, caches, etc.). Where an agent supports it, its ignore file is a symlink to `.agentignore` so the pattern list never drifts:
