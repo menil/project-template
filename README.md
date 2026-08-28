@@ -42,8 +42,10 @@ nix-shell
 ### Task Runner (`Justfile`)
 The following tasks are available via `just`:
 - `just`: List all available tasks.
-- `just format`: Format code and configuration files.
+- `just format`: Format code and configuration files (also regenerates `.claude/settings.json` from `.agentignore`).
 - `just lint`: Run code and markdown linters.
+- `just sync-agent-ignore`: Regenerate `.claude/settings.json`'s `Read` deny rules from `.agentignore`.
+- `just check-agent-ignore-sync`: Verify `.claude/settings.json` is in sync with `.agentignore` (no write).
 - `just validate`: Execute all formatting, linting, and verification checks.
 
 ### Git Hook Checks
@@ -56,6 +58,6 @@ The project automatically configures local Git hooks:
 
 - **Google Antigravity**: `.antigravityignore` → `.agentignore`. Note there are [open reports](https://github.com/google-antigravity/antigravity-cli/issues/309) that the Antigravity CLI doesn't always fully respect this file in practice.
 - **OpenCode**: has no native ignore-file support yet. The closest option is the community [`opencode-ignore`](https://github.com/lgladysz/opencode-ignore) plugin, which you install via `opencode.json` and which reads a `.ignore` file. If you adopt it, symlink `.ignore` to `.agentignore` the same way.
-- **Claude Code**: has **no** `.claudeignore` (or any other external ignore-file) mechanism — a symlink here would be inert. It automatically respects `.gitignore`. For checked-in paths it can't reach that way (e.g. lock files, vendored code), Claude Code supports `Read` deny rules in a local `.claude/settings.json` — see the [large-codebases guide](https://code.claude.com/docs/en/large-codebases.md#block-reads-of-generated-and-vendored-code). This repo doesn't ship one: `.claude/`, along with other agent-specific local config directories, is gitignored and never tracked, so add your own `.claude/settings.json` per-project if you want this enforced (you can base it on the `# Lock files` etc. sections of `.agentignore`).
+- **Claude Code**: has **no** `.claudeignore` (or any other external ignore-file) mechanism — a symlink here would be inert. It automatically respects `.gitignore`. For checked-in paths it can't reach that way (e.g. lock files, vendored code), Claude Code supports `Read` deny rules in `.claude/settings.json` — see the [large-codebases guide](https://code.claude.com/docs/en/large-codebases.md#block-reads-of-generated-and-vendored-code). This repo ships a generated `.claude/settings.json` (tracked in git, like Claude Code's own convention for shared project settings — only `.claude/settings.local.json` is gitignored) so it's enforced out of the box.
 
-To update the pattern list, edit `.agentignore` — the symlinked files pick up the change automatically.
+To update the pattern list, edit `.agentignore` — the symlinked files pick up the change automatically, and `just format` (or `just sync-agent-ignore` directly) regenerates `.claude/settings.json`'s deny rules from it via `scripts/sync-agent-ignore.sh`, so the two never drift. `just validate` fails if `.claude/settings.json` is stale.

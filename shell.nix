@@ -5,6 +5,7 @@ pkgs.mkShell {
     git
     gh
     just
+    jq
   ];
 
   shellHook = ''
