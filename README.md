@@ -50,3 +50,12 @@ The following tasks are available via `just`:
 The project automatically configures local Git hooks:
 - **`commit-msg`**: Validates that all commit titles adhere to the [Conventional Commits](https://www.conventionalcommits.org/) standard (e.g. `feat: add database support`).
 - **`pre-commit`**: Automatically runs `just validate` before allowing a commit. If any check fails, the commit is aborted.
+
+### AI Agent Ignore Files
+`.agentignore` at the repo root is the canonical, gitignore-syntax list of paths AI coding agents shouldn't read (dependencies, build output, secrets, caches, etc.). Agent-specific ignore files are symlinks to it, so the pattern list never drifts:
+
+- **Claude Code**: `.claudeignore` → `.agentignore`
+- **Google Antigravity**: `.antigravityignore` → `.agentignore`
+- **OpenCode**: has no native ignore-file support yet. The closest option is the community [`opencode-ignore`](https://github.com/lgladysz/opencode-ignore) plugin, which you install via `opencode.json` and which reads a `.ignore` file. If you adopt it, symlink `.ignore` to `.agentignore` the same way.
+
+To update the pattern list, edit `.agentignore` — the symlinked files pick up the change automatically.
