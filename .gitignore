@@ -36,3 +36,8 @@ pr.diff
 
 # Beads (issue tracking)
 .beads/
+
+# Agent-specific local config (never tracked)
+.claude/
+.codex/
+.agents/
