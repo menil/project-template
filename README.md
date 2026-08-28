@@ -52,10 +52,10 @@ The project automatically configures local Git hooks:
 - **`pre-commit`**: Automatically runs `just validate` before allowing a commit. If any check fails, the commit is aborted.
 
 ### AI Agent Ignore Files
-`.agentignore` at the repo root is the canonical, gitignore-syntax list of paths AI coding agents shouldn't read (dependencies, build output, secrets, caches, etc.). Agent-specific ignore files are symlinks to it, so the pattern list never drifts:
+`.agentignore` at the repo root is the canonical, gitignore-syntax list of paths AI coding agents shouldn't read (dependencies, build output, secrets, caches, etc.). Where an agent supports it, its ignore file is a symlink to `.agentignore` so the pattern list never drifts:
 
-- **Claude Code**: `.claudeignore` → `.agentignore`
-- **Google Antigravity**: `.antigravityignore` → `.agentignore`
+- **Google Antigravity**: `.antigravityignore` → `.agentignore`. Note there are [open reports](https://github.com/google-antigravity/antigravity-cli/issues/309) that the Antigravity CLI doesn't always fully respect this file in practice.
 - **OpenCode**: has no native ignore-file support yet. The closest option is the community [`opencode-ignore`](https://github.com/lgladysz/opencode-ignore) plugin, which you install via `opencode.json` and which reads a `.ignore` file. If you adopt it, symlink `.ignore` to `.agentignore` the same way.
+- **Claude Code**: has **no** `.claudeignore` (or any other external ignore-file) mechanism — a symlink here would be inert. It automatically respects `.gitignore`. For checked-in paths it can't reach that way (e.g. lock files, vendored code), Claude Code supports `Read` deny rules in a local `.claude/settings.json` — see the [large-codebases guide](https://code.claude.com/docs/en/large-codebases.md#block-reads-of-generated-and-vendored-code). This repo doesn't ship one: `.claude/`, along with other agent-specific local config directories, is gitignored and never tracked, so add your own `.claude/settings.json` per-project if you want this enforced (you can base it on the `# Lock files` etc. sections of `.agentignore`).
 
 To update the pattern list, edit `.agentignore` — the symlinked files pick up the change automatically.
