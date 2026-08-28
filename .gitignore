@@ -37,7 +37,5 @@ pr.diff
 # Beads (issue tracking)
 .beads/
 
-# Agent-specific local config (never tracked)
-.claude/
-.codex/
-.agents/
+# Claude Code local overrides (not shared; .claude/settings.json IS tracked)
+.claude/settings.local.json
