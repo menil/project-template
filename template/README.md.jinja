@@ -1,11 +1,12 @@
-# Project Template
+# {{ project_name }}
 
-A generic, modern project template powered by [Copier](https://copier.readthedocs.io/), pre-configured with developer tooling, Nix integration, local git hook validation, and automated AI code reviews.
+{{ project_description }}
 
 ## Features
 
-- 🚀 **Copier Scaffolding**: Flexible project generation with template variables and template updates (`copier update`).
+{% if enable_pr_reviews -%}
 - 🤖 **Automated PR Reviews**: Integrated via `menil/pr-code-review-action` with support for Anthropic (API key or Claude Code subscription token) and OpenRouter (free tier by default).
+{% endif -%}
 - ❄️ **Nix Shell**: Pre-configured `shell.nix` for consistent, reproducible developer environments.
 - 🛠️ **Local Task Runner (`Justfile`)**: Standardized commands for formatting, linting, and validating code.
 - 🛡️ **Git Hooks**: Pre-configured conventional commit title checks and automatic pre-commit quality checks.
@@ -16,36 +17,8 @@ A generic, modern project template powered by [Copier](https://copier.readthedoc
 
 ## Getting Started
 
-### 1. Create a Repository from this Template
-
-You can create a new project using the scaffolding helper script or the Copier CLI directly:
-
-#### Option A: Using the Scaffolding Helper Script
-From this repository, run:
-```bash
-./scripts/create-project.sh my-new-project
-```
-This will interactively prompt for template options, render files via Copier, initialize git, create the initial commit, and publish the repository to GitHub via the GitHub CLI.
-
-To create a public repository instead:
-```bash
-./scripts/create-project.sh --public my-new-project
-```
-
-#### Option B: Using the Copier CLI Directly
-```bash
-# 1. Generate the project directory
-copier copy gh:menil/project-template my-new-project
-
-# 2. Initialize and push to GitHub
-cd my-new-project
-git init -b main
-git add .
-git commit -m "feat: initial commit from project template"
-gh repo create my-new-project --private --source=. --push
-```
-
-### 2. Configure GitHub Secrets
+{% if enable_pr_reviews -%}
+### 1. Configure GitHub Secrets
 
 For automated PR code reviews to run successfully, navigate to your new repository's **Settings > Secrets and variables > Actions** and configure at least one of the following:
 
@@ -55,21 +28,12 @@ For automated PR code reviews to run successfully, navigate to your new reposito
 *(Note: The template uses GitHub's Action Sharing to fetch `menil/pr-code-review-action` keylessly. Ensure you have configured the action repository under **Settings > Actions > General > Access** to be accessible from other repositories owned by your user account).*
 
 ---
-
-## Upstream Template Updates
-
-Downstream projects created with Copier can pull in upstream updates (new tooling, updated hooks, improved CI workflows) with a single command:
-
-```bash
-copier update
-```
-
----
+{% endif -%}
 
 ## Development Environment
 
 ### Nix Shell
-Activate the Nix developer shell to load project tools (including `copier`, `just`, `gh`, `jq`, `git`):
+Activate the Nix developer shell to load project tools:
 ```bash
 nix-shell
 ```
@@ -81,8 +45,7 @@ The following tasks are available via `just`:
 - `just lint`: Run code and markdown linters.
 - `just sync-agent-ignore`: Regenerate `.claude/settings.json`'s `Read` deny rules from `.agentignore`.
 - `just check-agent-ignore-sync`: Verify `.claude/settings.json` is in sync with `.agentignore` (no write).
-- `just test-template`: Test-render the Copier template into a temporary directory.
-- `just validate`: Execute all formatting, linting, sync, and template verification checks.
+- `just validate`: Execute all formatting, linting, and verification checks.
 
 ### Git Hook Checks
 The project automatically configures local Git hooks:
@@ -102,3 +65,9 @@ These hooks only run locally and can be skipped (`git commit --no-verify`) or si
 - **Claude Code**: has **no** `.claudeignore` (or any other external ignore-file) mechanism — a symlink here would be inert. It automatically respects `.gitignore`. For checked-in paths it can't reach that way (e.g. lock files, vendored code), Claude Code supports `Read` deny rules in `.claude/settings.json` — see the [large-codebases guide](https://code.claude.com/docs/en/large-codebases.md#block-reads-of-generated-and-vendored-code). This repo ships a generated `.claude/settings.json` (tracked in git, like Claude Code's own convention for shared project settings — only `.claude/settings.local.json` is gitignored) so it's enforced out of the box.
 
 To update the pattern list, edit `.agentignore` — the symlinked files pick up the change automatically, and `just format` (or `just sync-agent-ignore` directly) regenerates `.claude/settings.json`'s deny rules from it via `scripts/sync-agent-ignore.sh`, so the two never drift. `just validate` fails if `.claude/settings.json` is stale.
+
+### Upstream Template Updates
+This project was scaffolded with [Copier](https://copier.readthedocs.io/). To pull in upstream updates (tooling, hooks, CI improvements) from `project-template`:
+```bash
+copier update
+```

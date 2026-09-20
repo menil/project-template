@@ -1,4 +1,1 @@
-#!/bin/sh
-
-echo "Running repository validation..."
-nix-shell --run "just validate"
+../template/.githooks/pre-commit
