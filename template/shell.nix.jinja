@@ -6,10 +6,9 @@ pkgs.mkShell {
     gh
     just
     jq
-    copier
   ];
 
   shellHook = ''
-    echo "❄️ Welcome to the Project Template shell!"
+    echo "❄️ Welcome to the {{ project_name }} shell!"
   '';
 }

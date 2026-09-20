@@ -1,0 +1,30 @@
+# Copier configuration for project-template
+_subdirectory: template
+_answers_file: .copier-answers.yml
+
+_exclude:
+  - "~*"
+  - "*.py[co]"
+  - "__pycache__"
+  - ".git"
+  - ".DS_Store"
+  - ".svn"
+  - ".beads"
+  - ".beads/**"
+  - ".beads.gate.lock"
+  - "{% if not enable_pr_reviews %}.github/workflows/pr-review.yml{% endif %}"
+
+project_name:
+  type: str
+  help: "Project display name"
+  default: "My Project"
+
+project_description:
+  type: str
+  help: "Short description of the project"
+  default: "A generic, modern project pre-configured with developer tooling, Nix integration, and CI validation."
+
+enable_pr_reviews:
+  type: bool
+  help: "Enable automated PR code reviews via GitHub Actions?"
+  default: true
