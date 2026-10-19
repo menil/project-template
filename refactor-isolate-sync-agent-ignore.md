@@ -1,9 +1,9 @@
 # AI Decision Record: Isolate sync-agent-ignore to Template Repository
 
 ## Context & Goal
-Previously, `sync-agent-ignore.sh` resided at `template/scripts/sync-agent-ignore.sh` with a root symlink at `scripts/sync-agent-ignore.sh`. When downstream repositories were scaffolded from `project-template` via Copier, Copier faithfully reproduced `scripts/sync-agent-ignore.sh`, tasks in `template/Justfile` (`sync-agent-ignore` and `check-agent-ignore-sync`), and an extraneous dependency on `jq` in `template/shell.nix.jinja`.
+Previously, `sync-agent-ignore.sh` resided at `template/scripts/sync-agent-ignore.sh` with a root symlink at `scripts/sync-agent-ignore.sh`. When downstream repositories were scaffolded from `project-template` via Copier, Copier faithfully reproduced `scripts/sync-agent-ignore.sh` and tasks in `template/Justfile` (`sync-agent-ignore` and `check-agent-ignore-sync`).
 
-Downstream repositories do not need this maintenance machinery: they simply need a clean project scaffold with pre-configured `.claude/settings.json` deny rules matching the template's standard `.agentignore`. Scaffolding an unnecessary `scripts/` directory and forcing child projects to carry `jq` and custom agent-ignore sync recipes created unwanted toolchain leakage and maintenance overhead.
+Downstream repositories do not need this maintenance machinery: they simply need a clean project scaffold with pre-configured `.claude/settings.json` deny rules matching the template's standard `.agentignore`. Scaffolding an unnecessary `scripts/` directory and forcing child projects to carry custom agent-ignore sync recipes created unwanted toolchain leakage and maintenance overhead.
 
 The goal was to isolate `sync-agent-ignore.sh` strictly to the template repository as developer maintenance tooling, ensuring child repositories remain clean, minimal, and fast to validate.
 
@@ -18,10 +18,10 @@ The goal was to isolate `sync-agent-ignore.sh` strictly to the template reposito
    - Running `scripts/sync-agent-ignore.sh` in the root repository updates `.claude/settings.json` via standard shell redirection (`> .claude/settings.json`), which follows the symlink and mutates `template/.claude/settings.json` in place without breaking the symlink.
    - The root `Justfile` continues to validate synchronization via `check-agent-ignore-sync` during `just validate`, ensuring shipped template defaults never drift.
 
-3. **Prune Downstream Tasks and Dependencies**:
+3. **Prune Downstream Tasks While Retaining Core Tooling**:
    - Removed `sync-agent-ignore` and `check-agent-ignore-sync` recipes from `template/Justfile`.
    - Simplified `template/Justfile` recipes: `format` now runs without prerequisites, and `validate: lint`.
-   - Removed `jq` from `template/shell.nix.jinja`, keeping downstream Nix shell environments lightweight.
+   - Retained standard developer CLI tools (`jq`, `git`, `gh`, `just`) in `template/shell.nix.jinja`.
 
 4. **Script Hardening & Edge-Case Resilience**:
    - Added CLI argument validation using `case "${1:-}" in` supporting `--check`, `-h|--help`, and rejecting unrecognized arguments to avoid accidental file mutation.
@@ -30,7 +30,7 @@ The goal was to isolate `sync-agent-ignore.sh` strictly to the template reposito
    - Protected script directory traversal with `CDPATH='' cd -- "$(dirname "${BASH_SOURCE[0]}")/.."`.
 
 5. **Downstream Documentation Alignment**:
-   - Updated `template/README.md.jinja` to clarify that `.claude/settings.json` is pre-configured and static; downstream developers who add custom paths to `.agentignore` should add corresponding `Read(...)` deny rules directly to `.claude/settings.json` or pull template updates via `copier update`.
+   - Updated `template/README.md.jinja` to clarify that `.claude/settings.json` is shipped pre-configured and static; downstream developers who add custom paths to `.agentignore` should add corresponding `Read(...)` deny rules directly to `.claude/settings.json` or pull template updates via `copier update`.
 
 6. **Expanded Test Assertions**:
    - Added positive assertion `test -f "$TMPDIR/rendered-default/.claude/settings.json"` in `Justfile`'s `test-template`.
@@ -40,7 +40,7 @@ The goal was to isolate `sync-agent-ignore.sh` strictly to the template reposito
 ## Alternatives Considered & Rejected
 
 1. **Retaining `sync-agent-ignore.sh` in Deployed Projects**:
-   - *Rejected*: Deployed repositories should not carry template maintenance infrastructure or extra Nix dependencies (`jq`) that have no bearing on the child project's runtime or development lifecycle.
+   - *Rejected*: Deployed repositories should not carry template maintenance infrastructure or Anthropic-specific validation recipes in `Justfile`.
 2. **Symlinking `.claude/settings.json` Directly to `.agentignore`**:
    - *Rejected*: Claude Code has no native support for `.gitignore`-syntax ignore files (`.claudeignore` does not exist); it requires JSON with `Read(...)` permissions in `settings.json`.
 3. **Dynamic Template Generation of `settings.json` via Jinja (`.claude/settings.json.jinja`)**:
