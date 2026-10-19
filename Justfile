@@ -30,7 +30,7 @@ test-template:
 
     # 1. Verify root developer tooling files are symlinks to template/
     failed=0
-    for symlink in .agentignore .envrc .githooks/commit-msg .githooks/pre-commit scripts/sync-agent-ignore.sh .claude/settings.json; do
+    for symlink in .agentignore .envrc .githooks/commit-msg .githooks/pre-commit .claude/settings.json; do
       if [[ ! -L "$symlink" ]]; then
         echo "error: root file '$symlink' is not a symlink to template/" >&2
         failed=1
@@ -41,13 +41,21 @@ test-template:
     fi
     diff -u .gitignore template/.gitignore
 
+    # Verify sync-agent-ignore.sh is tracked as an executable regular file (not a symlink)
+    test -f scripts/sync-agent-ignore.sh
+    test ! -L scripts/sync-agent-ignore.sh
+    test -x scripts/sync-agent-ignore.sh
+
     # 2. Test default template rendering (enable_pr_reviews=true)
     copier copy --defaults --trust . "$TMPDIR/rendered-default"
     test -f "$TMPDIR/rendered-default/README.md"
     test -f "$TMPDIR/rendered-default/shell.nix"
+    test -f "$TMPDIR/rendered-default/.claude/settings.json"
     test -f "$TMPDIR/rendered-default/.github/workflows/pr-review.yml"
     test ! -f "$TMPDIR/rendered-default/copier.yml"
     test ! -f "$TMPDIR/rendered-default/scripts/create-project.sh"
+    test ! -f "$TMPDIR/rendered-default/scripts/sync-agent-ignore.sh"
+    test ! -d "$TMPDIR/rendered-default/scripts"
     test ! -d "$TMPDIR/rendered-default/.beads"
 
     # Verify rendered project passes its own validation suite
@@ -61,6 +69,7 @@ test-template:
     # 4. Test scaffolding script dry run
     ./scripts/create-project.sh --dry-run --defaults --template . "$TMPDIR/dry-run-app"
     test -f "$TMPDIR/dry-run-app/README.md"
+    test ! -d "$TMPDIR/dry-run-app/scripts"
 
     # 5. Verify scaffolding script rejects target paths inside template directory (both shallow and multi-level)
     err_output=$(./scripts/create-project.sh --dry-run --defaults --template . "./internal-target-error" 2>&1 || true)
