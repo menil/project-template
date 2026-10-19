@@ -25,7 +25,7 @@ From this repository, run:
 ```bash
 ./scripts/create-project.sh my-new-project
 ```
-This will interactively prompt for template options, render files via Copier, initialize git, create the initial commit, and publish the repository to GitHub via the GitHub CLI.
+This will interactively prompt for template options, render files via Copier into a sibling directory (`../my-new-project` to prevent nested Git repositories), initialize git, create the initial commit, and publish the repository to GitHub via the GitHub CLI.
 
 To create a public repository instead:
 ```bash

@@ -31,6 +31,13 @@ Usage: create-project.sh [OPTIONS] <project-name-or-path>
 
 Scaffold a new project from project-template using Copier and publish to GitHub.
 
+Arguments:
+  <project-name-or-path>  Target directory or project name. When executed from
+                          within the template repository, bare project names are
+                          resolved as sibling directories (e.g. ../<name>) to
+                          prevent creating nested git repositories. Targets inside
+                          the template repository are disallowed.
+
 Options:
   --public            Create a public GitHub repository (default is --private)
   --private           Create a private GitHub repository (default)
@@ -135,11 +142,88 @@ if [[ "$DRY_RUN" == false ]]; then
   fi
 fi
 
-# Resolve target path and project display/slug names
-TARGET_PATH="$(mkdir -p "$TARGET" && cd "$TARGET" && pwd)"
+# Pre-flight check: verify template source does not contain nested git repositories.
+# Why: When Copier clones a template from a local Git repository, Git treats any nested directory
+# containing a '.git' directory as an unregistered gitlink/submodule. This triggers fatal errors
+# during cloning ('fatal: No url found for submodule path in .gitmodules').
+# We check [[ -e "$TEMPLATE_SRC/.git" ]] to support regular repos, git worktrees, and submodules.
+if [[ -e "$TEMPLATE_SRC/.git" ]]; then
+  NESTED_GIT_REPOS="$(find "$TEMPLATE_SRC" \( -path "${TEMPLATE_SRC%/}/.git" -o -name ".direnv" -o -name ".venv" -o -name "node_modules" \) -prune -o -mindepth 2 -name ".git" -print 2>/dev/null || true)"
+  if [[ -n "$NESTED_GIT_REPOS" ]]; then
+    echo "Error: Nested git repositories found inside template source ($TEMPLATE_SRC):" >&2
+    echo "$NESTED_GIT_REPOS" >&2
+    echo "Nested git repositories cause Copier submodule errors during cloning." >&2
+    echo "Please remove or move them outside the template repository before scaffolding." >&2
+    exit 1
+  fi
+fi
+
+# Strip trailing slashes from TARGET (handles tab-completion e.g. 'my-project/')
+TARGET="${TARGET%/}"
+if [[ -z "$TARGET" ]]; then
+  echo "Error: Project target cannot be empty." >&2
+  exit 1
+fi
+
+CURRENT_DIR="$(pwd -P)"
+TEMPLATE_REAL_DIR="$(cd "$DEFAULT_TEMPLATE_DIR" && pwd -P)"
+
+# If TARGET is a bare project name (contains no '/', and is not '.' or '..') and current directory
+# is within the template repo, resolve it as a sibling directory outside the template repository.
+# Why: Scaffolding a standalone Git repository inside the template directory creates an embedded
+# git repository that corrupts the template's Git index and Copier cloning. Sibling resolution matches
+# developer expectations (placing downstream projects alongside the template in the parent workspace)
+# without requiring manual "../" path prefixes.
+if [[ "$TARGET" != *"/"* && "$TARGET" != "." && "$TARGET" != ".." && ( "$CURRENT_DIR" == "$TEMPLATE_REAL_DIR" || "$CURRENT_DIR" == $TEMPLATE_REAL_DIR/* ) ]]; then
+  TARGET="$(dirname "$TEMPLATE_REAL_DIR")/$TARGET"
+fi
+
+# Pre-validate target containment BEFORE creating any directories on disk.
+# Why: Creating directories with 'mkdir -p' prior to validation leaves orphaned intermediate
+# directories inside the template repository if validation fails on a multi-level path (e.g. './nested/dir').
+# We walk up to the deepest existing ancestor to determine canonical placement without filesystem mutations.
+EXISTING_ANCESTOR="$TARGET"
+while [[ ! -d "$EXISTING_ANCESTOR" && "$EXISTING_ANCESTOR" != "/" && "$EXISTING_ANCESTOR" != "." ]]; do
+  PARENT_DIR="$(dirname "$EXISTING_ANCESTOR")"
+  [[ "$PARENT_DIR" == "$EXISTING_ANCESTOR" ]] && break
+  EXISTING_ANCESTOR="$PARENT_DIR"
+done
+ANCESTOR_REAL="$(cd "$EXISTING_ANCESTOR" 2>/dev/null && pwd -P || true)"
+
+FORBIDDEN_DIRS=("$TEMPLATE_REAL_DIR")
+if [[ -d "$TEMPLATE_SRC" ]]; then
+  TEMPLATE_SRC_REAL="$(cd "$TEMPLATE_SRC" 2>/dev/null && pwd -P || true)"
+  [[ -n "$TEMPLATE_SRC_REAL" && "$TEMPLATE_SRC_REAL" != "$TEMPLATE_REAL_DIR" ]] && FORBIDDEN_DIRS+=("$TEMPLATE_SRC_REAL")
+fi
+
+for forbidden in "${FORBIDDEN_DIRS[@]}"; do
+  if [[ -n "$ANCESTOR_REAL" && ( "$ANCESTOR_REAL" == "$forbidden" || "$ANCESTOR_REAL" == $forbidden/* ) ]]; then
+    echo "Error: Target directory cannot be inside the template repository ($forbidden)." >&2
+    echo "Please specify a destination outside the template repository (e.g. '../$(basename "$TARGET")')." >&2
+    exit 1
+  fi
+done
+
+# Safe to create target directory now that pre-validation has succeeded
+TARGET_PATH="$(mkdir -p "$TARGET" && cd "$TARGET" && pwd -P)"
 DIR_NAME="$(basename "$TARGET_PATH")"
+
+# Fallback post-creation check to ensure no edge-case path resolved inside the forbidden directories
+for forbidden in "${FORBIDDEN_DIRS[@]}"; do
+  if [[ "$TARGET_PATH" == "$forbidden" || "$TARGET_PATH" == $forbidden/* ]]; then
+    rmdir "$TARGET_PATH" 2>/dev/null || true
+    echo "Error: Target directory cannot be inside the template repository ($forbidden)." >&2
+    echo "Please specify a destination outside the template repository (e.g. '../$DIR_NAME')." >&2
+    exit 1
+  fi
+done
+
 # Sanitize directory name into a valid GitHub repo slug (lowercase, alphanumerics and dashes)
 REPO_SLUG="$(echo "$DIR_NAME" | tr '[:upper:]' '[:lower:]' | tr ' _' '--' | tr -cd 'a-z0-9.-')"
+if [[ -z "$REPO_SLUG" ]]; then
+  echo "Error: Project directory name '$DIR_NAME' cannot be converted into a valid GitHub repository slug." >&2
+  exit 1
+fi
 
 echo "=========================================="
 echo "🚀 Scaffolding Project: $DIR_NAME"
