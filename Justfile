@@ -62,6 +62,38 @@ test-template:
     ./scripts/create-project.sh --dry-run --defaults --template . "$TMPDIR/dry-run-app"
     test -f "$TMPDIR/dry-run-app/README.md"
 
+    # 5. Verify scaffolding script rejects target paths inside template directory (both shallow and multi-level)
+    err_output=$(./scripts/create-project.sh --dry-run --defaults --template . "./internal-target-error" 2>&1 || true)
+    if ! echo "$err_output" | grep -q "Target directory cannot be inside the template repository"; then
+      echo "error: create-project.sh should have rejected target path inside template repository. Got:" >&2
+      echo "$err_output" >&2
+      exit 1
+    fi
+    test ! -d "./internal-target-error"
+
+    # Verify '.' inside template repository is rejected
+    err_output_dot=$(./scripts/create-project.sh --dry-run --defaults --template . "." 2>&1 || true)
+    if ! echo "$err_output_dot" | grep -q "Target directory cannot be inside the template repository"; then
+      echo "error: create-project.sh should have rejected '.' inside template repository. Got:" >&2
+      echo "$err_output_dot" >&2
+      exit 1
+    fi
+
+    # Verify multi-level nested target is rejected without leaking intermediate directories
+    ./scripts/create-project.sh --dry-run --defaults --template . "./deep/nested/error-path" >/dev/null 2>&1 || true
+    test ! -d "./deep"
+
+    # 6. Verify pre-flight check catches nested git repositories before Copier runs
+    NESTED_TEST_DIR="$TMPDIR/template-with-nested-git"
+    mkdir -p "$NESTED_TEST_DIR/.git" "$NESTED_TEST_DIR/nested-repo/.git"
+    touch "$NESTED_TEST_DIR/copier.yml"
+    nested_err=$(./scripts/create-project.sh --dry-run --defaults --template "$NESTED_TEST_DIR" "$TMPDIR/nested-out" 2>&1 || true)
+    if ! echo "$nested_err" | grep -q "Nested git repositories found inside template source"; then
+      echo "error: create-project.sh should have detected nested .git directory. Got:" >&2
+      echo "$nested_err" >&2
+      exit 1
+    fi
+
     echo "✅ Copier template verification passed."
 
 # Run all local checks (tests, format checks, lints)
