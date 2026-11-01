@@ -5,7 +5,7 @@ A generic, modern project template powered by [Copier](https://copier.readthedoc
 ## Features
 
 - 🚀 **Copier Scaffolding**: Flexible project generation with template variables and template updates (`copier update`).
-- 🤖 **Automated PR Reviews**: Integrated via `menil/pr-code-review-action` with support for Anthropic (API key or Claude Code subscription token) and OpenRouter (free tier by default).
+- 🤖 **Automated PR Reviews**: Integrated via `menil/pr-code-review-action` with automated fallback from Claude (Claude Code subscription token or API key) to OpenRouter on token errors, credit depletion, or server outages.
 - ❄️ **Nix Shell**: Pre-configured `shell.nix` for consistent, reproducible developer environments.
 - 🛠️ **Local Task Runner (`Justfile`)**: Standardized commands for formatting, linting, and validating code.
 - 🛡️ **Git Hooks**: Pre-configured conventional commit title checks and automatic pre-commit quality checks.
@@ -50,7 +50,7 @@ gh repo create my-new-project --private --source=. --push
 For automated PR code reviews to run successfully, navigate to your new repository's **Settings > Secrets and variables > Actions** and configure at least one of the following:
 
 * **`ANTHROPIC_API_KEY`**: Your Anthropic API Key (or **`CLAUDE_CODE_OAUTH_TOKEN`** for Claude Code subscription tokens).
-* **`OPENROUTER_API_KEY`**: Your OpenRouter API Key (used as default/fallback).
+* **`OPENROUTER_API_KEY`**: Your OpenRouter API Key (used as automated fallback or primary provider).
 
 *(Note: The template uses GitHub's Action Sharing to fetch `menil/pr-code-review-action` keylessly. Ensure you have configured the action repository under **Settings > Actions > General > Access** to be accessible from other repositories owned by your user account).*
 
