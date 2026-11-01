@@ -52,6 +52,7 @@ test-template:
     test -f "$TMPDIR/rendered-default/shell.nix"
     test -f "$TMPDIR/rendered-default/.claude/settings.json"
     test -f "$TMPDIR/rendered-default/.github/workflows/pr-review.yml"
+    test -f "$TMPDIR/rendered-default/.github/dependabot.yml"
     test ! -f "$TMPDIR/rendered-default/copier.yml"
     test ! -f "$TMPDIR/rendered-default/scripts/create-project.sh"
     test ! -f "$TMPDIR/rendered-default/scripts/sync-agent-ignore.sh"
