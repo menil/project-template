@@ -53,11 +53,32 @@ test-template:
     test -f "$TMPDIR/rendered-default/.claude/settings.json"
     test -f "$TMPDIR/rendered-default/.github/workflows/pr-review.yml"
     test -f "$TMPDIR/rendered-default/.github/dependabot.yml"
+    test -f "$TMPDIR/rendered-default/.github/workflows/validate.yml"
     test ! -f "$TMPDIR/rendered-default/copier.yml"
     test ! -f "$TMPDIR/rendered-default/scripts/create-project.sh"
     test ! -f "$TMPDIR/rendered-default/scripts/sync-agent-ignore.sh"
     test ! -d "$TMPDIR/rendered-default/scripts"
     test ! -d "$TMPDIR/rendered-default/.beads"
+
+    # The root validate workflow is a separate file from the one shipped to
+    # generated projects (GitHub does not reliably load symlinked workflows),
+    # so assert they have not drifted apart.
+    diff -u .github/workflows/validate.yml template/.github/workflows/validate.yml
+
+    # Same for the nixpkgs pin, which lives in two shell files: a bump must
+    # update both, and an empty match means the pattern no longer finds a pin.
+    pin_pattern='archive/[0-9a-f]{40}\.tar\.gz|sha256 = "[^"]+"'
+    root_pin=$(grep -oE "$pin_pattern" shell.nix)
+    template_pin=$(grep -oE "$pin_pattern" template/shell.nix.jinja)
+    if [[ -z "$root_pin" || "$root_pin" != "$template_pin" ]]; then
+      echo "error: nixpkgs pin differs between shell.nix and template/shell.nix.jinja" >&2
+      exit 1
+    fi
+
+    # `just validate` below runs in the already-active root shell, so the
+    # rendered shell.nix would otherwise never be evaluated. This catches a
+    # broken pin (bad url or hash) or a templating mistake before a user does.
+    nix-instantiate "$TMPDIR/rendered-default/shell.nix" >/dev/null
 
     # Verify rendered project passes its own validation suite
     (cd "$TMPDIR/rendered-default" && just validate)

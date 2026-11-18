@@ -5,17 +5,36 @@ on:
   push:
     branches: [main]
 
+# Read-only: validation never needs to write to the repo or PRs.
+permissions:
+  contents: read
+
+# A newer push to the same PR makes the older run's result irrelevant, so
+# cancel it instead of paying for a full Nix setup. Pushes to main use the
+# commit SHA as their group, so each one gets its own run: none is cancelled
+# or replaced in the queue, and every commit that lands on main is validated.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   validate:
     runs-on: ubuntu-latest
+    # The default job timeout is 6 hours; a hung Nix download or test would
+    # burn runner minutes for that long. A normal run finishes far sooner, so
+    # raise this only if the project's own validation genuinely grows.
+    timeout-minutes: 15
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          # Validation never pushes, so don't leave the token in .git/config.
+          persist-credentials: false
 
+      # nixpkgs is pinned inside shell.nix, so no NIX_PATH channel is needed
+      # here and CI uses the same tool versions as local development.
       - name: Install Nix
         uses: cachix/install-nix-action@v31
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Run validation
         run: nix-shell --run "just validate"

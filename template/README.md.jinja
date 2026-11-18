@@ -38,6 +38,15 @@ Activate the Nix developer shell to load project tools:
 nix-shell
 ```
 
+The shell pins nixpkgs to a fixed revision (see the top of `shell.nix`), so
+everyone, and CI, get the same tool versions. Dependabot cannot update this
+kind of pin, so refresh it occasionally:
+
+1. Pick a nixpkgs revision.
+2. Run `nix-prefetch-url --unpack https://github.com/NixOS/nixpkgs/archive/<rev>.tar.gz`.
+3. Put the revision and the printed hash into `shell.nix`.
+4. Run `just validate`.
+
 ### Task Runner (`Justfile`)
 The following tasks are available via `just`:
 - `just`: List all available tasks.
