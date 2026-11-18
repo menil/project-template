@@ -11,3 +11,17 @@ updates:
       github-actions:
         patterns:
           - "*"
+
+  # The template's own workflows live under template/, which the "/" entry
+  # above does not scan, so they would otherwise never get bumped.
+  - package-ecosystem: "github-actions"
+    directory: "/template"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      template-github-actions:
+        patterns:
+          - "*"
