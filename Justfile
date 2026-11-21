@@ -60,6 +60,13 @@ test-template:
     test ! -d "$TMPDIR/rendered-default/scripts"
     test ! -d "$TMPDIR/rendered-default/.beads"
 
+    # The review action runs with the project's secrets, so a generated project
+    # must reference a release tag or SHA of it, never the moving main branch.
+    if grep -rnE 'pr-code-review-action@main' "$TMPDIR/rendered-default/.github"; then
+        echo "error: generated project references the review action at @main" >&2
+        exit 1
+    fi
+
     # The root validate workflow is a separate file from the one shipped to
     # generated projects (GitHub does not reliably load symlinked workflows),
     # so assert they have not drifted apart.
