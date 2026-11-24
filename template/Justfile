@@ -14,3 +14,9 @@ lint:
 
 # Run all local checks (tests, format checks, lints)
 validate: lint
+
+# One-time GitHub setup for the issue automation: the repository setting that lets
+# workflows open pull requests, and the labels a person applies. Needs gh, logged in as
+# an admin of the repository.
+setup-github:
+    @if [ -x scripts/setup-github.sh ]; then scripts/setup-github.sh; else echo "This project was generated without the issue automation."; fi

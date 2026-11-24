@@ -30,6 +30,27 @@ For automated PR code reviews to run successfully, navigate to your new reposito
 ---
 {% endif -%}
 
+{% if enable_issue_automation -%}
+## Issue automation
+
+Two workflows from [`menil/pr-code-review-action`](https://github.com/menil/pr-code-review-action) work on issues:
+
+* **`issue-triage.yml`** labels each new issue (`bug`, `enhancement`, `question`, `documentation`, a likely `duplicate`) and, when a report is too thin to act on, asks once for what is missing. It never closes or assigns anything.
+* **`implement-issue.yml`** is started by a person with write access applying the **`ready-to-implement`** label (or, if you set the repository variable `AGENT_AUTO` to `true`, by their own new issues). A model assesses whether the issue is real and reproducible; if it is, another run writes a fix and opens a **draft** pull request for you to review. It never merges or approves anything. Add the **`no-agent`** label to keep it off an issue.
+
+### One-time setup
+
+1. `just setup-github` turns on the repository setting **"Allow GitHub Actions to create and approve pull requests"** and creates the two labels. It runs by itself when the project is created with `scripts/create-project.sh`, and once per clone when you enter the directory with direnv, if `gh` is logged in as an admin of the repository. Set `SKIP_SETUP_GITHUB=1` to stop the automatic run.
+2. Set the secret: `gh secret set CLAUDE_CODE_OAUTH_TOKEN`.
+3. Edit the places marked `EDIT` in `.github/workflows/implement-issue.yml`: the commands the model may run and a few notes about the project.
+
+That setting is one switch for two things: it also lets workflows in the repository **approve** pull requests. These workflows never do, but if you rely on required reviews, check that an approval from a workflow cannot satisfy them (for example by requiring review from code owners).
+
+A pull request opened by the workflow's own token does not run `validate` or the review until you click "Approve and run": one click per agent pull request. Read ["Issue implementation"](https://github.com/menil/pr-code-review-action#issue-implementation) before relying on it; the model reads text an outsider may have written, with your Claude token in the job's environment.
+
+---
+{% endif -%}
+
 ## Development Environment
 
 ### Nix Shell
