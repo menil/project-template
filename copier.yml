@@ -13,6 +13,13 @@ _exclude:
   - ".beads/**"
   - ".beads.gate.lock"
   - "{% if not enable_pr_reviews %}.github/workflows/pr-review.yml{% endif %}"
+  # The issue automation's files are left out when it is off. `scripts` is excluded as a
+  # whole directory on purpose: excluding only scripts/setup-github.sh leaves an empty
+  # scripts/ directory in every generated project. Copier only renders template/scripts/,
+  # so a project's own scripts are never touched.
+  - "{% if not enable_issue_automation %}.github/workflows/issue-triage.yml{% endif %}"
+  - "{% if not enable_issue_automation %}.github/workflows/implement-issue.yml{% endif %}"
+  - "{% if not enable_issue_automation %}scripts{% endif %}"
 
 project_name:
   type: str
@@ -28,3 +35,8 @@ enable_pr_reviews:
   type: bool
   help: "Enable automated PR code reviews via GitHub Actions?"
   default: true
+
+enable_issue_automation:
+  type: bool
+  help: "Enable issue triage and the label-triggered agent that drafts fixes (uses your Claude subscription; needs a one-time GitHub setup)?"
+  default: false

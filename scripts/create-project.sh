@@ -271,6 +271,17 @@ echo ""
 echo "🌐 Creating GitHub repository ($REPO_SLUG with $VISIBILITY)..."
 gh repo create "$REPO_SLUG" "$VISIBILITY" --source=. --push
 
+# If the project uses the issue automation, set up what it needs on GitHub now: the
+# repository exists and gh is logged in as its owner. A failure here is not fatal; the
+# same setup can be run later with `just setup-github`.
+ISSUE_AUTOMATION=false
+if [[ -x scripts/setup-github.sh ]]; then
+  ISSUE_AUTOMATION=true
+  echo ""
+  echo "⚙️  Setting up the issue automation on GitHub..."
+  scripts/setup-github.sh || echo "⚠️  Setup did not finish; run 'just setup-github' later."
+fi
+
 echo ""
 echo "=========================================="
 echo "🎉 Project successfully created and published!"
@@ -279,4 +290,8 @@ echo "Next steps:"
 echo "  1. cd \"$TARGET_PATH\""
 echo "  2. direnv allow  (or enter 'nix-shell')"
 echo "  3. If PR reviews are enabled, configure ANTHROPIC_API_KEY (or CLAUDE_CODE_OAUTH_TOKEN) and/or OPENROUTER_API_KEY in GitHub repository secrets"
+if [[ "$ISSUE_AUTOMATION" == true ]]; then
+  echo "  4. For the issue automation, set CLAUDE_CODE_OAUTH_TOKEN (gh secret set CLAUDE_CODE_OAUTH_TOKEN),"
+  echo "     then edit the EDIT markers in .github/workflows/implement-issue.yml"
+fi
 echo "=========================================="

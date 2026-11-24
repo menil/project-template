@@ -88,6 +88,28 @@ test-template:
     test -f "$TMPDIR/rendered-no-pr/README.md"
     test ! -f "$TMPDIR/rendered-no-pr/.github/workflows/pr-review.yml"
 
+    # 3b. The issue automation is off by default and on when asked for.
+    test ! -f "$TMPDIR/rendered-default/.github/workflows/issue-triage.yml"
+    test ! -f "$TMPDIR/rendered-default/.github/workflows/implement-issue.yml"
+    copier copy --defaults --trust -d enable_issue_automation=true . "$TMPDIR/rendered-automation"
+    test -f "$TMPDIR/rendered-automation/.github/workflows/issue-triage.yml"
+    test -f "$TMPDIR/rendered-automation/.github/workflows/implement-issue.yml"
+    test -x "$TMPDIR/rendered-automation/scripts/setup-github.sh"
+    grep -q "## Issue automation" "$TMPDIR/rendered-automation/README.md"
+    ! grep -q "## Issue automation" "$TMPDIR/rendered-default/README.md"
+    # A project without it says so, and one with it runs the script (which, outside a git
+    # repository, only explains itself).
+    (cd "$TMPDIR/rendered-default" && just setup-github | grep -q "generated without the issue automation")
+    (cd "$TMPDIR/rendered-automation" && just setup-github | grep -q "not a git repository")
+    (cd "$TMPDIR/rendered-automation" && just validate)
+    # The scaffolding script must set it up after it creates the repository, not before.
+    create_line=$(grep -n 'gh repo create' scripts/create-project.sh | head -1 | cut -d: -f1)
+    setup_line=$(grep -n 'scripts/setup-github.sh' scripts/create-project.sh | head -1 | cut -d: -f1)
+    if [[ -z "$setup_line" || "$setup_line" -le "$create_line" ]]; then
+      echo "error: create-project.sh must run scripts/setup-github.sh after 'gh repo create'" >&2
+      exit 1
+    fi
+
     # 4. Test scaffolding script dry run
     ./scripts/create-project.sh --dry-run --defaults --template . "$TMPDIR/dry-run-app"
     test -f "$TMPDIR/dry-run-app/README.md"
@@ -127,5 +149,9 @@ test-template:
 
     echo "✅ Copier template verification passed."
 
+# Test the one-time GitHub setup script against a fake gh and throwaway repositories
+test-setup-github:
+    tests/test-setup-github.sh
+
 # Run all local checks (tests, format checks, lints)
-validate: check-agent-ignore-sync lint test-template
+validate: check-agent-ignore-sync lint test-template test-setup-github
