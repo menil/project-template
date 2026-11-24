@@ -95,6 +95,11 @@ test-template:
     test -f "$TMPDIR/rendered-automation/.github/workflows/issue-triage.yml"
     test -f "$TMPDIR/rendered-automation/.github/workflows/implement-issue.yml"
     test -x "$TMPDIR/rendered-automation/scripts/setup-github.sh"
+    # The agent's pull requests are reviewed by the implementation workflow itself, and the
+    # project's own review workflow steps aside for them so a click does not add a second one.
+    grep -q "pull_request_number:" "$TMPDIR/rendered-automation/.github/workflows/implement-issue.yml"
+    grep -q "startsWith(github.head_ref, 'agent/issue-')" "$TMPDIR/rendered-automation/.github/workflows/pr-review.yml"
+    ! grep -nE 'pr-code-review-action[/a-z]*@(main|v1\.[0-4]\.)' "$TMPDIR/rendered-automation/.github/workflows/implement-issue.yml"
     grep -q "## Issue automation" "$TMPDIR/rendered-automation/README.md"
     ! grep -q "## Issue automation" "$TMPDIR/rendered-default/README.md"
     # A project without it says so, and one with it runs the script (which, outside a git
