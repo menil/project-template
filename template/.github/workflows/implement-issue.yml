@@ -61,7 +61,7 @@ jobs:
 
       - name: Assess the issue
         id: assess
-        uses: menil/pr-code-review-action/implement/assess@b81f629b442f2523b55e9987be6a6973b400fa32 # v1.5.0
+        uses: menil/pr-code-review-action/implement/assess@8dac5610659f39bb9a53c127568fe4f9a9d036a6 # v1.6.0
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           issue_number: ${{ github.event.issue.number }}
@@ -91,14 +91,14 @@ jobs:
       - name: Write the assessment
         id: report
         if: needs.assess.outputs.capped != 'true'
-        uses: menil/pr-code-review-action/implement/report@b81f629b442f2523b55e9987be6a6973b400fa32 # v1.5.0
+        uses: menil/pr-code-review-action/implement/report@8dac5610659f39bb9a53c127568fe4f9a9d036a6 # v1.6.0
         with:
           issue_number: ${{ github.event.issue.number }}
           verdict: ${{ needs.assess.outputs.verdict }}
 
       - name: Say the daily limit was reached
         if: needs.assess.outputs.capped == 'true'
-        uses: menil/pr-code-review-action/implement/notify@b81f629b442f2523b55e9987be6a6973b400fa32 # v1.5.0
+        uses: menil/pr-code-review-action/implement/notify@8dac5610659f39bb9a53c127568fe4f9a9d036a6 # v1.6.0
         with:
           issue_number: ${{ github.event.issue.number }}
           kind: capped
@@ -128,7 +128,7 @@ jobs:
 
       - name: Fix the issue and open a draft pull request
         id: fix
-        uses: menil/pr-code-review-action/implement/fix@b81f629b442f2523b55e9987be6a6973b400fa32 # v1.5.0
+        uses: menil/pr-code-review-action/implement/fix@8dac5610659f39bb9a53c127568fe4f9a9d036a6 # v1.6.0
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           issue_number: ${{ github.event.issue.number }}
@@ -170,7 +170,7 @@ jobs:
           fi
 
       - name: Review the pull request
-        uses: menil/pr-code-review-action@b81f629b442f2523b55e9987be6a6973b400fa32 # v1.5.0
+        uses: menil/pr-code-review-action@8dac5610659f39bb9a53c127568fe4f9a9d036a6 # v1.6.0
         with:
           # Claude first (the subscription token), OpenRouter as the fallback if that fails,
           # as in pr-review.yml. Either key alone is enough; remove one to use only the other.
@@ -189,7 +189,7 @@ jobs:
       issues: write
     steps:
       - name: Say the run failed
-        uses: menil/pr-code-review-action/implement/notify@b81f629b442f2523b55e9987be6a6973b400fa32 # v1.5.0
+        uses: menil/pr-code-review-action/implement/notify@8dac5610659f39bb9a53c127568fe4f9a9d036a6 # v1.6.0
         with:
           issue_number: ${{ github.event.issue.number }}
           kind: failed
