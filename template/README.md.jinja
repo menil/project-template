@@ -36,7 +36,7 @@ For automated PR code reviews to run successfully, navigate to your new reposito
 Two workflows from [`menil/issue-and-pr-agent-actions`](https://github.com/menil/issue-and-pr-agent-actions) work on issues:
 
 * **`issue-triage.yml`** labels each new issue (`bug`, `enhancement`, `question`, `documentation`, a likely `duplicate`) and, when a report is too thin to act on, asks once for what is missing. It never closes or assigns anything.
-* **`implement-issue.yml`** is started by a person with write access applying the **`ready-to-implement`** label (or, if you set the repository variable `AGENT_AUTO` to `true`, by their own new issues). A model assesses whether the issue is real and reproducible; if it is, another run writes a fix and opens a **draft** pull request for you to review. It never merges or approves anything. Add the **`no-agent`** label to keep it off an issue.
+* **`implement-issue.yml`** is started by a person with write access applying the **`ready-to-implement`** label (or, if you set the repository variable `AGENT_AUTO` to `true`, by their own new issues). A model assesses whether the issue is real and reproducible; if it is, another run tries to show the problem with a failing test, fixes it, and opens a pull request, ready for you to review, with the issue labelled **`pr-open`**. If it cannot show the problem it changes nothing: the issue gets **`needs-human`** and a comment with the agent's own short reason and any commands it was refused. It never merges or approves anything. Add the **`no-agent`** label to keep it off an issue.
 
 ### One-time setup
 
@@ -46,7 +46,7 @@ Two workflows from [`menil/issue-and-pr-agent-actions`](https://github.com/menil
 
 That setting is one switch for two things: it also lets workflows in the repository **approve** pull requests. These workflows never do, but if you rely on required reviews, check that an approval from a workflow cannot satisfy them (for example by requiring review from code owners).
 
-A pull request opened by the workflow's own token does not run `validate` or the review until you click "Approve and run": one click per agent pull request. Read ["Issue implementation"](https://github.com/menil/issue-and-pr-agent-actions#issue-implementation) before relying on it; the model reads text an outsider may have written, with your Claude token in the job's environment.
+A pull request opened by the workflow's own token does not run `validate` until you click "Approve and run": one click per agent pull request. The review of it runs by itself, from the workflow. Read ["Issue implementation"](https://github.com/menil/issue-and-pr-agent-actions#issue-implementation) before relying on it; the model reads text an outsider may have written, with your Claude token in the job's environment.
 
 ---
 {% endif -%}
